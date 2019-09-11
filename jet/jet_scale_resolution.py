@@ -40,10 +40,11 @@ def main():
     for i in range(0,len(_pt)-1):
         shape  = ROOT.TH1F("shape","shape",50,0.25,2.5)
 
+        reco_bin = "jet_pt>10"
         gen_bin = "genjet_pt>"+str(_pt[i])+" && genjet_pt<"+str(_pt[i+1])
         eta_bin = "abs(genjet_eta)>="+str(_eta[0])+" && abs(genjet_eta)<"+str(_eta[1])
         npv_bin = "npv>="+str(_npv[0])+" && npv<"+str(_npv[1])
-        t_in.Draw("jet_pt/genjet_pt>>shape",gen_bin + "&&" + eta_bin + "&&" + npv_bin,"goff")
+        t_in.Draw("rawjet_pt/genjet_pt>>shape",reco_bin + "&& " + gen_bin + "&&" + eta_bin + "&&" + npv_bin,"goff")
 
         mean, mean_error, sigma, sigma_error = ConvFit(shape ,False,"ratio","jet pt/gen jet pt",folder+"/fit","FIT_pt_"+str(_pt[i])+"_eta_"+args.eta+"_npv_"+args.npv)
 
