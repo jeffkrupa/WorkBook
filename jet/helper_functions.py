@@ -25,7 +25,7 @@ def ConvFit( shape, isData, var_name, label, fit_plot_directory, fit_filename = 
     tmp_mean_error = shape.GetMeanError()
     tmp_sigma_error = shape.GetRMSError()
     
-    asymmetry   = ROOT.RooRealVar(var_name,label,0.5,1.5) ;
+    asymmetry   = ROOT.RooRealVar(var_name,label,tmp_mean-2*tmp_sigma,tmp_mean+2*tmp_sigma) ;
     dh          = ROOT.RooDataHist("datahistshape","datahistshape",ROOT.RooArgList(asymmetry),ROOT.RooFit.Import(shape)) ;
     
     # plot the data hist with error from sum of weighted events

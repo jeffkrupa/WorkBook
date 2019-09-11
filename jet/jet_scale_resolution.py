@@ -40,7 +40,7 @@ def main():
     for i in range(0,len(_pt)-1):
         shape  = ROOT.TH1F("shape","shape",50,0.25,2.5)
 
-        reco_bin = "jet_pt>"+str(_pt[0])
+        reco_bin = "rawjet_pt>"+str(_pt[0])
         gen_bin = "genjet_pt>"+str(_pt[i])+" && genjet_pt<"+str(_pt[i+1])
         eta_bin = "abs(genjet_eta)>="+str(_eta[0])+" && abs(genjet_eta)<"+str(_eta[1])
         npv_bin = "npv>="+str(_npv[0])+" && npv<"+str(_npv[1])
