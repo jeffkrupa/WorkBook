@@ -25,7 +25,7 @@ def main():
 
     f_in = ROOT.TFile(str(args.input),"READ")
     t_in = f_in.Get("events")
-    _pt  = [30,50,75,100,150,250,500,1000,2000]
+    _pt  = [30,50,75,100,150,250,500,1000]
     _eta = [float(args.eta.split("_")[0].replace("p",".")), float(args.eta.split("_")[1].replace("p","."))]
     _npv = [float(args.npv.split("_")[0]), float(args.npv.split("_")[1])]
 
