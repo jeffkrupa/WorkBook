@@ -67,13 +67,19 @@ def main():
         h_sigma.SetBinContent(i+1,sigma)
         h_sigma.SetBinError(i+1,sigma_error)
 
-    c = ROOT.TCanvas("mean","mean", 600, 600)
+    makePlot(h_mean, 0.7, 1.3, "Gen jet p_{T} [GeV]", "Response",folder+"mean_eta_"+args.eta+"_npv_"+args.npv, _eta[0], _eta[1], _npv[0], _npv[1])
+    makePlot(h_sigma_corrected,0.0, 0.5, "Gen jet p_{T} [GeV]","Resolution / Response", folder+"sigma_eta_"+args.eta+"_npv_"+args.npv,_eta[0], _eta[1], _npv[0], _npv[1])
+    makePlot(h_sigma,0.0, 0.5, "Gen jet p_{T} [GeV]","Resolution",folder+"sigmaabs_eta_"+args.eta+"_npv_"+args.npv,_eta[0], _eta[1], _npv[0], _npv[1])
+
+def makePlot(hist, ymin, ymax, xtitle, ytitle, folder, eta0, eta1, npv0, npv1):
+
+    c = ROOT.TCanvas("c","c", 600, 600)
     c.cd()
     c.SetLogx()
     ROOT.gStyle.SetOptStat(False)
 
-    legend = ROOT.TLegend(0.50, 0.55, 0.65, .65);
-    legend . AddEntry(h_mean,"chs jet" , "lp")
+    legend = ROOT.TLegend(0.60, 0.60, 0.75, .75);
+    legend . AddEntry(hist,"chs jet" , "lp")
 
     latex2 = ROOT.TLatex()
     latex2.SetNDC()
@@ -81,46 +87,24 @@ def main():
     latex2.SetTextFont(42)
     latex2.SetTextAlign(31) # align right                                                     
 
-    makePlot(h_mean, "Gen jet p_{T} [GeV]", "Response")
-    legend.Draw("same")
-    latex2.DrawLatex(0.90, 0.93,str(_eta[0])+" < #eta <"+ str(_eta[1]) + ", "+ str(_npv[0])+" < npv < " + str(_npv[1]))
-    latex2.Draw("same")
-    c.SaveAs(folder+"FIT_mean_eta_"+args.eta+"_npv_"+args.npv+".png")
-    c.SaveAs(folder+"FIT_mean_eta_"+args.eta+"_npv_"+args.npv+".pdf")
-    
-    c1 = ROOT.TCanvas("sigma","sigma", 600, 600)
-    c1.cd()
-    c1.SetLogx()
-
-    makePlot(h_sigma_corrected,"Gen jet p_{T} [GeV]","Resolution / Response")
-    latex2.DrawLatex(0.90, 0.93,str(_eta[0])+" < #eta <"+ str(_eta[1]) + ", "+ str(_npv[0])+" < npv < " + str(_npv[1]))
-    latex2.Draw("same")
-    legend.Draw("same")
-    c1.SaveAs(folder+"FIT_sigma_eta_"+args.eta+"_npv_"+args.npv+".png")
-    c1.SaveAs(folder+"FIT_sigma_eta_"+args.eta+"_npv_"+args.npv+".pdf")
-    
-    c2 = ROOT.TCanvas("sigmaabs","sigmaabs", 600, 600)
-    c2.cd()
-    c2.SetLogx()
-    makePlot(h_sigma,"Gen jet p_{T} [GeV]","Resolution")
-    latex2.Draw("same")
-    legend.Draw("same")
-    c2.SaveAs(folder+"FIT_sigmaabs_eta_"+args.eta+"_npv_"+args.npv+".png")
-    c2.SaveAs(folder+"FIT_sigmaabs_eta_"+args.eta+"_npv_"+args.npv+".pdf")
-
-def makePlot(hist, xtitle, ytitle):
-
     hist.SetTitle("")
     hist.GetXaxis().SetTitle(xtitle)
     hist.GetYaxis().SetTitle(ytitle)
     hist.GetXaxis().SetTitleOffset(1.2)
     hist.GetYaxis().SetTitleOffset(1.3)
-    hist.SetMaximum(1.3)
-    hist.SetMinimum(0.7)
+    hist.SetMaximum(ymax)
+    hist.SetMinimum(ymin)
     hist.SetLineWidth(2)
-    hist.Draw("")
     hist.SetMarkerStyle(20)
     hist.SetMarkerSize(0.8)
+
+    hist.Draw("")
+    legend.Draw("same")
+    latex2.DrawLatex(0.90, 0.93,str(eta0)+" < #eta <"+ str(eta1) + ", "+ str(npv0)+" < npv < " + str(npv1))
+
+    c.SaveAs(folder+".png")
+    c.SaveAs(folder+".pdf")
+
 
 if __name__ == '__main__':
     main()
