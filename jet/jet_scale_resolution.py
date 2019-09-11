@@ -41,7 +41,7 @@ def main():
     for i in range(0,len(_pt)-1):
         shape  = ROOT.TH1F("shape","shape",50,0.25,2.5)
 
-        reco_bin = "rawjet_pt>"+str(_pt[0])
+        reco_bin = "rawjet_pt>30"
         gen_bin = "genjet_pt>"+str(_pt[i])+" && genjet_pt<"+str(_pt[i+1])
         eta_bin = "abs(genjet_eta)>="+str(_eta[0])+" && abs(genjet_eta)<"+str(_eta[1])
         npv_bin = "npv>="+str(_npv[0])+" && npv<"+str(_npv[1])
@@ -80,10 +80,10 @@ def main():
     latex2.SetTextSize(0.4*c.GetTopMargin())
     latex2.SetTextFont(42)
     latex2.SetTextAlign(31) # align right                                                     
-    latex2.DrawLatex(0.90, 0.93,str(_eta[0])+" < #eta <"+ str(_eta[1]) + ", "+ str(_npv[0])+" < npv < " + str(_npv[1]))
 
     makePlot(h_mean, "Gen jet p_{T} [GeV]", "Response")
     legend.Draw("same")
+    latex2.DrawLatex(0.90, 0.93,str(_eta[0])+" < #eta <"+ str(_eta[1]) + ", "+ str(_npv[0])+" < npv < " + str(_npv[1]))
     latex2.Draw("same")
     c.SaveAs(folder+"FIT_mean_eta_"+args.eta+"_npv_"+args.npv+".png")
     c.SaveAs(folder+"FIT_mean_eta_"+args.eta+"_npv_"+args.npv+".pdf")
@@ -93,6 +93,7 @@ def main():
     c1.SetLogx()
 
     makePlot(h_sigma_corrected,"Gen jet p_{T} [GeV]","Resolution / Response")
+    latex2.DrawLatex(0.90, 0.93,str(_eta[0])+" < #eta <"+ str(_eta[1]) + ", "+ str(_npv[0])+" < npv < " + str(_npv[1]))
     latex2.Draw("same")
     legend.Draw("same")
     c1.SaveAs(folder+"FIT_sigma_eta_"+args.eta+"_npv_"+args.npv+".png")
