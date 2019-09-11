@@ -25,7 +25,7 @@ def main():
 
     f_in = ROOT.TFile(str(args.input),"READ")
     t_in = f_in.Get("events")
-    _pt  = [20,50,100,200,500,2000]
+    _pt  = [30,50,75,100,150,250,500,1000,2000]
     _eta = [float(args.eta.split("_")[0].replace("p",".")), float(args.eta.split("_")[1].replace("p","."))]
     _npv = [float(args.npv.split("_")[0]), float(args.npv.split("_")[1])]
 
@@ -40,7 +40,7 @@ def main():
     for i in range(0,len(_pt)-1):
         shape  = ROOT.TH1F("shape","shape",50,0.25,2.5)
 
-        reco_bin = "jet_pt>10"
+        reco_bin = "jet_pt>"+str(_pt[0])
         gen_bin = "genjet_pt>"+str(_pt[i])+" && genjet_pt<"+str(_pt[i+1])
         eta_bin = "abs(genjet_eta)>="+str(_eta[0])+" && abs(genjet_eta)<"+str(_eta[1])
         npv_bin = "npv>="+str(_npv[0])+" && npv<"+str(_npv[1])
@@ -76,7 +76,7 @@ def main():
         h_mean.SetMarkerStyle(20)
         h_mean.SetMarkerSize(0.8)
         
-        legend = ROOT.TLegend(0.30, 0.65, 0.65, .85);
+        legend = ROOT.TLegend(0.50, 0.65, 0.65, .85);
         legend . AddEntry(h_mean,"chs jet" , "lp")
 
         legend.Draw("same")
@@ -86,7 +86,7 @@ def main():
         latex2.SetTextSize(0.4*c.GetTopMargin())
         latex2.SetTextFont(42)
         latex2.SetTextAlign(31) # align right                                                     
-        latex2.DrawLatex(0.90, 0.93,str(_eta[0])+" < #eta <"+ str(_eta[1]) + ", "+ str(_npv[0])+" < #npv < " + str(_npv[1]))
+        latex2.DrawLatex(0.90, 0.93,str(_eta[0])+" < #eta <"+ str(_eta[1]) + ", "+ str(_npv[0])+" < npv < " + str(_npv[1]))
 
         latex2.Draw("same")
 
@@ -100,11 +100,11 @@ def main():
         h_sigma_corrected.GetYaxis().SetTitle("Resolution / Response")
         h_sigma_corrected.SetTitle("")
         h_sigma_corrected.GetXaxis().SetTitleOffset(1.2)
-        h_sigma_corrected.GetYaxis().SetTitleOffset(1.3)
+        h_sigma_corrected.GetYaxis().SetTitleOffset(1.5)
         h_sigma_corrected.SetLineWidth(2)
         h_sigma_corrected.SetMaximum(0.5)
         h_sigma_corrected.SetMinimum(0)
-        h_sigma_corrected.Draw()
+        h_sigma_corrected.Draw("")
         h_sigma_corrected.SetMarkerStyle(20)
         h_sigma_corrected.SetMarkerSize(0.8)
 
@@ -113,7 +113,7 @@ def main():
         latex2.SetTextSize(0.4*c1.GetTopMargin())
         latex2.SetTextFont(42)
         latex2.SetTextAlign(31) # align right                                                     
-        latex2.DrawLatex(0.90, 0.93,str(_eta[0])+" < #eta <"+ str(_eta[1]) + ", "+ str(_npv[0])+" < #pv < " + str(_npv[1]))
+        latex2.DrawLatex(0.90, 0.93,str(_eta[0])+" < #eta <"+ str(_eta[1]) + ", "+ str(_npv[0])+" < npv < " + str(_npv[1]))
 
         latex2.Draw("same")
 
@@ -141,7 +141,7 @@ def main():
         latex2.SetTextSize(0.4*c2.GetTopMargin())
         latex2.SetTextFont(42)
         latex2.SetTextAlign(31) # align right                                                     
-        latex2.DrawLatex(0.90, 0.93,str(_eta[0])+" < #eta <"+ str(_eta[1]) + ", "+ str(_npv[0])+" < #pv < " + str(_npv[1]))
+        latex2.DrawLatex(0.90, 0.93,str(_eta[0])+" < #eta <"+ str(_eta[1]) + ", "+ str(_npv[0])+" < npv < " + str(_npv[1]))
 
         latex2.Draw("same")
 
