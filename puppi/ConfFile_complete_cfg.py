@@ -1,4 +1,4 @@
-mport FWCore.ParameterSet.Config as cms
+import FWCore.ParameterSet.Config as cms
 from Configuration.StandardSequences.Eras import eras
 process = cms.Process('PUPPI',eras.Run2_2018)
 
@@ -14,7 +14,7 @@ process.maxEvents = cms.untracked.PSet( input = cms.untracked.int32(-1) )
 
 process.source = cms.Source("PoolSource",
     fileNames = cms.untracked.vstring(
-        'file:myfile.root'
+        'root://cms-xrd-global.cern.ch//store/mc/RunIIAutumn18MiniAOD/DYJetsToLL_M-50_TuneCP5_13TeV-amcatnloFXFX-pythia8/MINIAODSIM/102X_upgrade2018_realistic_v15-v1/120000/B3F93EA2-04C6-E04E-96AF-CB8FAF67E6BA.root'
     )
 )
 
@@ -69,12 +69,12 @@ runMetCorAndUncFromMiniAOD(process,
                            postfix="Puppi" 
                            )
 process.p = cms.Path(
+    #process.fullPatMetSequence *
     process.egmPhotonIDSequence *
     process.puppiMETSequence * 
     process.fullPatMetSequencePuppi
     ) 
 
-process.p = cms.Path()
 process.output = cms.OutputModule("PoolOutputModule",
                                   outputCommands = cms.untracked.vstring('keep *'),
                                   fileName       = cms.untracked.string ("ReminiAOD.root")
