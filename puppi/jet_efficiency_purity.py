@@ -1,5 +1,5 @@
 # import ROOT in batch mode
-import sys
+import sys, os
 import time
 from array import array
 from math import hypot, pi, sqrt, fabs
@@ -177,7 +177,7 @@ for ievent,event in enumerate(events):
 		h_newpuppijet_npv.Fill(vertex.product().size())
 		for gi, gj in enumerate (genjets.product()):
 			dR = deltaR(j, gj)
-			if dR > 0.25: continue 
+			if dR > 0.2: continue 
 			matched_gen_jets.append(gj)
 			matched_rec_jets.append(j)
 			if gj.pt()<20: continue
