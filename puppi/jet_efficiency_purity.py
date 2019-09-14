@@ -225,7 +225,9 @@ def plot(hists,filename,xvarname,yvarname):
 		hist.Draw("same")
 		legend.AddEntry(hist, hist.GetPassedHistogram().GetTitle(),"lp")
 	legend.Draw("same")
-	c.Print("result/"+filename)
+	if not os.path.exists("plots"): os.makedirs("plots")
+	c.SaveAs("plots/"+filename+".png")
+	c.SaveAs("plots/"+filename+".pdf")
 
 outfile.cd()
 
@@ -237,5 +239,5 @@ eff_npv[0].Write()
 eff_npv[1].Write()
 eff_npv[2].Write()
 
-plot(prt_npv, "purity_npv.png", "number of reconstructed vertices","Purity")
-plot(eff_npv , "efficiency_npv.png" , "number of reconstructed vertices"     , "Efficiency")
+plot(prt_npv, "purity_npv", "number of reconstructed vertices","Purity")
+plot(eff_npv , "efficiency_npv" , "number of reconstructed vertices"     , "Efficiency")
