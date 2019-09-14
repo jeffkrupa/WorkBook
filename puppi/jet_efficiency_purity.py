@@ -128,11 +128,12 @@ for ievent,event in enumerate(events):
 	matched_rec_jets=[]
 	for i,j in enumerate(jets.product()):
 		if i>=maxjet: break
+                if not (j.genJet() == None):
+                        matched_gen_jets.append(j.genJet())
+                        matched_rec_jets.append(j)
 		if j.pt()<30: continue
 		h_chsjet_npv.Fill(vertex.product().size())
 		if not (j.genJet() == None):
-			matched_gen_jets.append(j.genJet())
-			matched_rec_jets.append(j)
 			if j.genJet().pt()<20: continue
 			h_chsjet_matched_npv.Fill(vertex.product().size())
 	for i,j in enumerate(genjets.product()):
@@ -150,11 +151,12 @@ for ievent,event in enumerate(events):
 	matched_rec_jets=[]
 	for i,j in enumerate(pjets.product()):
 		if i>=maxjet: break
-		if j.pt()<30: continue
-		h_puppijet_npv.Fill(vertex.product().size())
 		if not (j.genJet() == None):
 			matched_gen_jets.append(j.genJet())
 			matched_rec_jets.append(j)
+		if j.pt()<30: continue
+		h_puppijet_npv.Fill(vertex.product().size())
+		if not (j.genJet() == None):
 			if j.genJet().pt()<20: continue
 			h_puppijet_matched_npv.Fill(vertex.product().size())
 	for i,j in enumerate(genjets.product()):
@@ -173,15 +175,16 @@ for ievent,event in enumerate(events):
 	matched_rec_jets=[]
 	for i,j in enumerate(njets.product()):
 		if i>=maxjet: break
-		if j.pt()<30: continue
-		h_newpuppijet_npv.Fill(vertex.product().size())
+		if j.pt()>30: 
+			h_newpuppijet_npv.Fill(vertex.product().size())
+
 		for gi, gj in enumerate (genjets.product()):
 			dR = deltaR(j, gj)
 			if dR > 0.2: continue 
 			matched_gen_jets.append(gj)
 			matched_rec_jets.append(j)
-			if gj.pt()<20: continue
-			h_newpuppijet_matched_npv.Fill(vertex.product().size())
+			if gj.pt()>20 and j.pt()>30: 
+				h_newpuppijet_matched_npv.Fill(vertex.product().size())
 	for i,j in enumerate(genjets.product()):
 		if i>=maxjet: break
 		if j.pt()<30: continue
