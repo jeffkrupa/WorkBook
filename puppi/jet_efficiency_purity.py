@@ -1,246 +1,199 @@
 # import ROOT in batch mode
-import sys, os
+from DataFormats.FWLite import Handle, Events
+import numpy as np
+import sys
+import os
 import time
 from array import array
 from math import hypot, pi, sqrt, fabs
 import ROOT
+import re
 
-oldargv = sys.argv[:]
-sys.argv = [ '-b-' ]
+
 ROOT.gROOT.SetBatch(True)
-sys.argv = oldargv
-
-from FWCore.ParameterSet.VarParsing import VarParsing
-options = VarParsing('python')
-
-#default options
-options.inputFiles="/uscms_data/d3/zdemirag/JUMPSHOT/CMSSW_10_2_5/src/WorkBook/puppi/input/ReminiAOD.root"
-options.outputFile="jetmetNtuples.root"
-options.maxEvents=-1
-
-#overwrite if given any command line arguments
-options.parseArguments()
-#in case of txt input file, read the information from txt
-li_f=[]
-for iF,F in enumerate(options.inputFiles):
-	print F
-	if F.split('.')[-1] == "txt":
-		options.inputFiles.pop(iF)
-		with open(F) as f:
-			li_f+=f.read().splitlines()
-options.inputFiles=li_f
-print "analyzing files:"
-for F in options.inputFiles: print F
-
-# define deltaR
-from math import hypot, pi, sqrt, fabs
-import numpy as n
-
-#from functions import *
-
-# load FWLite C++ libraries
-ROOT.gSystem.Load("libFWCoreFWLite.so");
-ROOT.gSystem.Load("libDataFormatsFWLite.so");
+ROOT.gStyle.SetOptStat(0)
+ROOT.gSystem.Load("libFWCoreFWLite.so")
+ROOT.gSystem.Load("libDataFormatsFWLite.so")
 ROOT.FWLiteEnabler.enable()
-
-# load FWlite python libraries
-from DataFormats.FWLite import Handle, Events
-
-jets, jetLabel	    = Handle("std::vector<pat::Jet>"), "slimmedJets"
-pjets, pjetLabel    = Handle("std::vector<pat::Jet>"), "slimmedJetsPuppi"
-njets, njetLabel    = Handle("std::vector<pat::Jet>"), "patJetsPuppi"
-vertex, vertexLabel = Handle("std::vector<reco::Vertex>"),"offlineSlimmedPrimaryVertices"
-
-genjets, genjetLabel      = Handle("std::vector<reco::GenJet>"), "slimmedGenJets"
-
-##Helper functions
-#in order to print out the progress
-def print_same_line(s):
-	sys.stdout.write(s)					 # just print
-	sys.stdout.flush()					  # needed for flush when using \x08
-	sys.stdout.write((b'\x08' * len(s)).decode())# back n chars		
-
-def deltaPhi(a,b):
-    dphi = abs(float(a.phi()) - float(b.phi()))
-    if (dphi <= pi): return dphi
-    else: return 2*pi - dphi
-        
-
-def deltaR(a,b):
-    dphi = deltaPhi(a,b)
-    return hypot((a.eta()-b.eta()),dphi)
-
-
-events = Events(options)
-nevents = int(events.size())
-print "total events: ", events.size()
-
-outfile=ROOT.TFile("hists.root","recreate")
-
 ROOT.TH1.SetDefaultSumw2()
 
-#Init histograms
-_npv = n.arange(0,70,7)
-eff_npv = [] #efficiency
-eff_npv.append(ROOT.TEfficiency("eff_npv_CHS","CHS",len(_npv)-1,array('d',_npv)))
-eff_npv.append(ROOT.TEfficiency("eff_npv_PUPPI","PUPPI",len(_npv)-1,array('d',_npv)))
-eff_npv.append(ROOT.TEfficiency("eff_npv_PUPPI","new PUPPI",len(_npv)-1,array('d',_npv)))
 
-prt_npv = [] #Purity
-prt_npv.append(ROOT.TEfficiency("prt_npv_CHS","CHS",len(_npv)-1,array('d',_npv)))
-prt_npv.append(ROOT.TEfficiency("prt_npv_PUPPI","PUPPI",len(_npv)-1,array('d',_npv)))
-prt_npv.append(ROOT.TEfficiency("prt_npv_newPUPPI","new PUPPI",len(_npv)-1,array('d',_npv)))
+# Plot the histograms
+def plot(hists, filename, xvarname, yvarname):
+    c = ROOT.TCanvas("c", "c", 800, 800)
+    colors = [  ROOT.kCyan+1,
+                ROOT.kBlue+1,
+                ROOT.kMagenta+1 ]
+    legend = ROOT.TLegend(0.70, 0.85, 1, 0.93)
+    binedge = array('d', np.zeros(hists[0].GetPassedHistogram().GetNbinsX()))
+    hists[0].GetPassedHistogram().GetXaxis().GetLowEdge(binedge)
 
-#for purity
-h_chsjet_npv              = ROOT.TH1F("recojets_npv_CHS","CHS",len(_npv)-1,array('d',_npv))
-h_chsjet_matched_npv      = ROOT.TH1F("matchedrecojets_npv_CHS","CHS",len(_npv)-1,array('d',_npv))
-h_puppijet_npv            = ROOT.TH1F("recojets_npv_PUPPI","PUPPI",len(_npv)-1,array('d',_npv))
-h_puppijet_matched_npv    = ROOT.TH1F("matchedrecojets_npv_PUPPI","PUPPI",len(_npv)-1,array('d',_npv))
-h_newpuppijet_npv         = ROOT.TH1F("recojets_npv_newPUPPI","new PUPPI",len(_npv)-1,array('d',_npv))
-h_newpuppijet_matched_npv = ROOT.TH1F("matchedrecojets_npv_newPUPPI","new PUPPI",len(_npv)-1,array('d',_npv))
+    # Aesthetics
+    hframe = c.DrawFrame(0, 0, 70, 1.1, "")
+    hframe.GetXaxis().SetTitle(xvarname)
+    hframe.GetXaxis().SetTitleOffset(1.2)
+    hframe.GetYaxis().SetTitle(yvarname)
+    hframe.GetYaxis().SetTitleOffset(1.3)
 
-#for efficiency
-h_gen_chsjet_npv              = ROOT.TH1F("genjets_npv_CHS","CHS",len(_npv)-1,array('d',_npv))
-h_gen_chsjet_matched_npv      = ROOT.TH1F("matchedgenjets_npv_CHS","CHS",len(_npv)-1,array('d',_npv))
-h_gen_puppijet_npv            = ROOT.TH1F("genjets_npv_PUPPI","PUPPI",len(_npv)-1,array('d',_npv))
-h_gen_puppijet_matched_npv    = ROOT.TH1F("matchedgenjets_npv_PUPPI","PUPPI",len(_npv)-1,array('d',_npv))
-h_gen_newpuppijet_npv         = ROOT.TH1F("genjets_npv_newPUPPI","new PUPPI",len(_npv)-1,array('d',_npv))
-h_gen_newpuppijet_matched_npv = ROOT.TH1F("matchedgenjets_npv_newPUPPI","new PUPPI",len(_npv)-1,array('d',_npv))
+    # Draw the histograms
+    for color, hist in zip(colors, hists):
+        hist.SetLineColor(color)
+        hist.SetLineWidth(2)
+        hist.Draw("same")
+        name = re.sub('.*npv_','',hist.GetPassedHistogram().GetTitle())
+        legend.AddEntry(hist, name, "lp")
 
-maxjet=1000
-
-for ievent,event in enumerate(events):
-
-	if options.maxEvents is not -1:
-		if ievent > options.maxEvents: continue
-	
-	event.getByLabel(jetLabel, jets)
-	event.getByLabel(pjetLabel, pjets)
-	event.getByLabel(njetLabel, njets)
-        event.getByLabel(genjetLabel, genjets)
-
-	event.getByLabel(vertexLabel, vertex)
-
-	print_same_line(str(round(100.*ievent/nevents,2))+'%')
-
-	###CHS JETS
-	matched_gen_jets=[]
-	matched_rec_jets=[]
-	for i,j in enumerate(jets.product()):
-		if i>=maxjet: break
-                if not (j.genJet() == None):
-                        matched_gen_jets.append(j.genJet())
-                        matched_rec_jets.append(j)
-		if j.pt()<30: continue
-		h_chsjet_npv.Fill(vertex.product().size())
-		if not (j.genJet() == None):
-			if j.genJet().pt()<20: continue
-			h_chsjet_matched_npv.Fill(vertex.product().size())
-	for i,j in enumerate(genjets.product()):
-		if i>=maxjet: break
-		if j.pt()<30: continue
-		h_gen_chsjet_npv.Fill(vertex.product().size())
-		if j in matched_gen_jets:
-			if matched_rec_jets[matched_gen_jets.index(j)].pt()<20: continue
-			h_gen_chsjet_matched_npv.Fill(vertex.product().size())
-		else:
-			continue
-
-	###Puppi JETS
-	matched_gen_jets=[]
-	matched_rec_jets=[]
-	for i,j in enumerate(pjets.product()):
-		if i>=maxjet: break
-		if not (j.genJet() == None):
-			matched_gen_jets.append(j.genJet())
-			matched_rec_jets.append(j)
-		if j.pt()<30: continue
-		h_puppijet_npv.Fill(vertex.product().size())
-		if not (j.genJet() == None):
-			if j.genJet().pt()<20: continue
-			h_puppijet_matched_npv.Fill(vertex.product().size())
-	for i,j in enumerate(genjets.product()):
-		if i>=maxjet: break
-		if j.pt()<30: continue
-		h_gen_puppijet_npv.Fill(vertex.product().size())
-		if j in matched_gen_jets:
-			if matched_rec_jets[matched_gen_jets.index(j)].pt()<20: continue
-			h_gen_puppijet_matched_npv.Fill(vertex.product().size())
-		else:
-			continue
-
-	###New Puppi JETS
-	###Note that this is not a slimmed jet collection, we need to gen matching by hand.
-	matched_gen_jets=[]
-	matched_rec_jets=[]
-	for i,j in enumerate(njets.product()):
-		if i>=maxjet: break
-		if j.pt()>30: 
-			h_newpuppijet_npv.Fill(vertex.product().size())
-
-		for gi, gj in enumerate (genjets.product()):
-			dR = deltaR(j, gj)
-			if dR > 0.2: continue 
-			matched_gen_jets.append(gj)
-			matched_rec_jets.append(j)
-			if gj.pt()>20 and j.pt()>30: 
-				h_newpuppijet_matched_npv.Fill(vertex.product().size())
-	for i,j in enumerate(genjets.product()):
-		if i>=maxjet: break
-		if j.pt()<30: continue
-		h_gen_newpuppijet_npv.Fill(vertex.product().size())
-		if j in matched_gen_jets:
-			if matched_rec_jets[matched_gen_jets.index(j)].pt()<20: continue			
-			h_gen_newpuppijet_matched_npv.Fill(vertex.product().size())
-		else:
-			continue
-
-prt_npv[0] = ROOT.TEfficiency(h_chsjet_matched_npv, h_chsjet_npv)
-prt_npv[0].SetDirectory(ROOT.gDirectory);
-
-prt_npv[1] = ROOT.TEfficiency(h_puppijet_matched_npv, h_puppijet_npv)
-prt_npv[1].SetDirectory(ROOT.gDirectory);
-
-prt_npv[2] = ROOT.TEfficiency(h_newpuppijet_matched_npv, h_newpuppijet_npv)
-prt_npv[2].SetDirectory(ROOT.gDirectory);
-
-eff_npv[0] = ROOT.TEfficiency(h_gen_chsjet_matched_npv, h_gen_chsjet_npv)
-eff_npv[1] = ROOT.TEfficiency(h_gen_puppijet_matched_npv, h_gen_puppijet_npv)
-eff_npv[2] = ROOT.TEfficiency(h_gen_newpuppijet_matched_npv, h_gen_newpuppijet_npv)
-
-ROOT.gStyle.SetOptStat(0)
+    legend.Draw("same")
+    if not os.path.exists("plots"):
+        os.makedirs("plots")
+    c.SaveAs("plots/"+filename+".png")
+    c.SaveAs("plots/"+filename+".pdf")
 
 
-#Plot the histograms
-def plot(hists,filename,xvarname,yvarname):
-	c = ROOT.TCanvas("c","c",800,800) 
-	colors=[ROOT.kCyan+1,ROOT.kBlue+1,ROOT.kMagenta+1,ROOT.kRed+1,ROOT.kOrange,ROOT.kYellow+1,ROOT.kGreen+1,ROOT.kGray] 
-	legend=ROOT.TLegend(0.70,0.85,1,0.93)
-	binedge=array('d',n.zeros(hists[0].GetPassedHistogram().GetNbinsX()))
-	hists[0].GetPassedHistogram().GetXaxis().GetLowEdge(binedge)
-	hframe=c.DrawFrame(binedge[0]-hists[0].GetPassedHistogram().GetBinWidth(0),0,binedge[-1]+2*hists[0].GetPassedHistogram().GetBinWidth(hists[0].GetPassedHistogram().GetNbinsX()),1.1,"")
-	hframe.GetXaxis().SetTitle(xvarname)
-	hframe.GetXaxis().SetTitleOffset(1.2)
-	hframe.GetYaxis().SetTitle(yvarname)
-	hframe.GetYaxis().SetTitleOffset(1.3)
-	for ihist,hist in enumerate(hists):
-		hist.SetLineColor(colors[ihist])
-		hist.Draw("same")
-		legend.AddEntry(hist, hist.GetPassedHistogram().GetTitle(),"lp")
-	legend.Draw("same")
-	if not os.path.exists("plots"): os.makedirs("plots")
-	c.SaveAs("plots/"+filename+".png")
-	c.SaveAs("plots/"+filename+".pdf")
 
-outfile.cd()
+def print_same_line(s):
+    sys.stdout.write(s)
+    sys.stdout.flush()
+    sys.stdout.write((b'\x08' * len(s)).decode())  # back n chars
 
-prt_npv[0].Write()
-prt_npv[1].Write()
-prt_npv[2].Write()
 
-eff_npv[0].Write()
-eff_npv[1].Write()
-eff_npv[2].Write()
+def deltaPhi(a, b):
+    '''Calculate delta phi between two candidates'''
+    dphi = abs(a.phi() - b.phi())
+    if (dphi <= pi):
+        return dphi
+    else:
+        return 2*pi - dphi
 
-plot(prt_npv, "purity_npv", "number of reconstructed vertices","Purity")
-plot(eff_npv , "efficiency_npv" , "number of reconstructed vertices"     , "Efficiency")
+def deltaR(a, b):
+    '''Calulate delta R between two candidates'''
+    dphi = deltaPhi(a, b)
+    return hypot(a.eta()-b.eta(), dphi)
+
+def find_matching_jet(one_jet, many_jets):
+    for j in many_jets:
+        if deltaR(j, one_jet) < 0.4:
+            return j
+    return None
+
+def fill_histograms(recjets, genjets, nvtx, h_npv, h_matched_npv, h_gen_npv, h_gen_matched_npv):
+
+    ### Purity
+    # Loop over reconstructed jets
+    # and check how often they have a
+    # matching gen jet
+    for recjet in recjets:
+        # Jet PT cut
+        if recjet.pt() < 30:
+            continue
+
+        # Denominator: all jets passing pt cut
+        h_npv.Fill(nvtx)
+
+        # Numerator: matched jets passing pt cut
+        matching_gen_jet = find_matching_jet(recjet, genjets)
+        if matching_gen_jet and matching_gen_jet.pt() > 20:
+                h_matched_npv.Fill(nvtx)
+
+    ### Efficiency
+    # Loop over gen jets
+    # and check how often they have a
+    # they have a matching reco jet
+    for genjet in genjets:
+        # PT cut
+        if genjet.pt() < 30:
+            continue
+
+        # Denominator: All gen jets passing pt cut
+        h_gen_npv.Fill(nvtx)
+
+        # Numerator: matched gen jets passing pt cut
+        matching_rec_jet = find_matching_jet(genjet, recjets)
+        if matching_rec_jet and matching_rec_jet.pt() > 20:
+            h_gen_matched_npv.Fill(nvtx)
+
+def main():
+
+    # All the inputs we need to retrieve the EDM collections from MiniAOD
+    jet_handle, jet_label = Handle("std::vector<pat::Jet>"), "slimmedJets"
+    pjet_handle, pjet_label = Handle("std::vector<pat::Jet>"), "slimmedJetsPuppi"
+    njet_handle, njet_label = Handle("std::vector<pat::Jet>"), "patJetsPuppi"
+    vertex_handle, vertex_label = Handle("std::vector<reco::Vertex>"), "offlineSlimmedPrimaryVertices"
+    genjet_handle, genjet_label = Handle("std::vector<reco::GenJet>"), "slimmedGenJets"
+
+    # Initialize histograms
+    npv_bins = np.arange(0, 70, 7)
+    def make_npv_hist(title):
+        h = ROOT.TH1F(title, title, len(npv_bins)-1, array('d',npv_bins))
+        h.SetDirectory(0)
+        return h
+    # for purity
+
+    h_chsjet_npv                = make_npv_hist("recojets_npv_CHS")
+    h_chsjet_matched_npv        = make_npv_hist("matchedrecojets_npv_CHS")
+    h_puppijet_npv              = make_npv_hist("recojets_npv_PUPPI")
+    h_puppijet_matched_npv      = make_npv_hist("matchedrecojets_npv_PUPPI")
+    h_newpuppijet_npv           = make_npv_hist("recojets_npv_newPUPPI")
+    h_newpuppijet_matched_npv   = make_npv_hist("matchedrecojets_npv_newPUPPI")
+
+    # for efficiency
+    h_gen_chsjet_npv                = make_npv_hist("genjets_npv_CHS")
+    h_gen_chsjet_matched_npv        = make_npv_hist("matchedgenjets_npv_CHS")
+    h_gen_puppijet_npv              = make_npv_hist("genjets_npv_PUPPI")
+    h_gen_puppijet_matched_npv      = make_npv_hist("matchedgenjets_npv_PUPPI")
+    h_gen_newpuppijet_npv           = make_npv_hist("genjets_npv_newPUPPI")
+    h_gen_newpuppijet_matched_npv   = make_npv_hist( "matchedgenjets_npv_newPUPPI")
+
+    events = Events("root://cmsxrootd.fnal.gov//store/user/aandreas/share/jumpshot/ReminiAOD.root")
+    nevents = int(events.size())
+    print "total events: ", nevents
+
+
+    for ievent, event in enumerate(events):
+        print_same_line(str(round(100.*ievent/nevents, 2))+'%')
+
+        # Retrieve collections
+        event.getByLabel(jet_label, jet_handle)
+        event.getByLabel(pjet_label, pjet_handle)
+        event.getByLabel(njet_label, njet_handle)
+        event.getByLabel(genjet_label, genjet_handle)
+        event.getByLabel(vertex_label, vertex_handle)
+
+        # Unpack for easier handling
+        nvtx = vertex_handle.product().size()
+        genjets = genjet_handle.product()
+        jets = jet_handle.product()
+        pjets = pjet_handle.product()
+        njets = njet_handle.product()
+
+        # CHS jets
+        fill_histograms(jets, genjets, nvtx, h_chsjet_npv, h_chsjet_matched_npv, h_gen_chsjet_npv, h_gen_chsjet_matched_npv)
+
+        # Puppi jets
+        fill_histograms(pjets, genjets, nvtx, h_puppijet_npv, h_puppijet_matched_npv, h_gen_puppijet_npv, h_gen_puppijet_matched_npv)
+
+        # New puppi jets
+        fill_histograms(njets, genjets, nvtx, h_newpuppijet_npv, h_newpuppijet_matched_npv, h_gen_newpuppijet_npv, h_gen_newpuppijet_matched_npv)
+
+
+    # Plug our numerator and denominator histograms into TEfficiency
+    # and run a quick plotting code
+    prt_npv = []
+    prt_npv.append(ROOT.TEfficiency(h_chsjet_matched_npv, h_chsjet_npv))
+    prt_npv.append(ROOT.TEfficiency(h_puppijet_matched_npv, h_puppijet_npv))
+    prt_npv.append(ROOT.TEfficiency(h_newpuppijet_matched_npv, h_newpuppijet_npv))
+    plot(prt_npv, "purity_npv", "number of reconstructed vertices", "Purity")
+
+    # Same for efficiency
+    eff_npv = []
+    eff_npv.append(ROOT.TEfficiency(h_gen_chsjet_matched_npv, h_gen_chsjet_npv))
+    eff_npv.append(ROOT.TEfficiency(h_gen_puppijet_matched_npv, h_gen_puppijet_npv))
+    eff_npv.append(ROOT.TEfficiency(h_gen_newpuppijet_matched_npv, h_gen_newpuppijet_npv))
+    plot(eff_npv, "efficiency_npv", "number of reconstructed vertices", "Efficiency")
+
+
+
+
+
+if __name__ == "__main__":
+    main()
