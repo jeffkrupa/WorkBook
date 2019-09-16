@@ -144,7 +144,7 @@ def main():
     h_gen_newpuppijet_npv           = make_npv_hist("genjets_npv_newPUPPI")
     h_gen_newpuppijet_matched_npv   = make_npv_hist( "matchedgenjets_npv_newPUPPI")
 
-    events = Events("/uscms_data/d3/zdemirag/JUMPSHOT/CMSSW_10_2_5/src/WorkBook/puppi/input/ReminiAOD.root")
+    events = Events("root://cmsxrootd.fnal.gov//store/user/aandreas/share/jumpshot/ReminiAOD.root")
     nevents = int(events.size())
     print "total events: ", nevents
 
